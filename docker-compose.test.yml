@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  test-db:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=testpassword123
+      - POSTGRES_DB=trading_db_test
+    ports:
+      - "5440:5432"
+
+  test-redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6380:6379" 
