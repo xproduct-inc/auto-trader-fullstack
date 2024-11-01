@@ -10,6 +10,7 @@ from src.core.config import get_settings
 from src.utils.redis_client import RedisClient
 from src.db.session import get_db
 from src.db.models.trading import Trade, PerformanceMetrics
+from src.services.technical_analysis import TechnicalAnalysis
 
 settings = get_settings()
 
@@ -33,13 +34,53 @@ class StrategyGenerator:
 
             self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
             
-            # Create or load assistant
+            # Create or load assistant with enhanced options trading expertise
             assistant = await self.client.beta.assistants.create(
-                name="Trading Strategy Generator",
+                name="Options Trading Strategy Generator",
                 instructions="""
-                You are an expert crypto trading strategy generator. Analyze market data 
-                and generate trading strategies. Focus on risk management and consistent returns.
-                Provide clear entry/exit signals and risk parameters.
+                You are an expert crypto options trading strategist specializing in advanced volatility trading and options strategies.
+
+                Key Responsibilities:
+                1. Analyze Market Context:
+                   - Evaluate IV Rank and IV Percentile for volatility regime identification
+                   - Assess volatility term structure for contango/backwardation
+                   - Analyze volatility skew for market sentiment
+                   - Monitor gamma exposure levels and potential market impact
+                   - Track put/call ratios for sentiment shifts
+                   - Evaluate open interest distribution for key strike levels
+
+                2. Strategy Generation:
+                   - Design delta-neutral strategies when appropriate
+                   - Utilize calendar spreads during volatility term structure opportunities
+                   - Implement iron condors/butterflies in range-bound markets
+                   - Deploy ratio spreads for directional plays with volatility edge
+                   - Use covered calls and cash-secured puts for premium harvesting
+                   - Consider diagonal spreads for complex volatility views
+
+                3. Risk Management:
+                   - Set position sizes based on portfolio VaR
+                   - Calculate optimal stop-loss levels using options Greeks
+                   - Monitor and adjust for vega risk exposure
+                   - Track and manage theta decay
+                   - Assess gamma risk at key price levels
+                   - Consider rolling strategies near expiration
+
+                4. Market Mechanics:
+                   - Account for options expiration cycles
+                   - Consider liquidity at different strikes
+                   - Monitor implied volatility surface changes
+                   - Track max pain points for potential pin risk
+                   - Evaluate market maker positioning
+                   - Consider funding rates for crypto-specific impacts
+
+                Provide clear trade recommendations with:
+                - Strategy type and rationale
+                - Specific strikes and expiries
+                - Entry/exit criteria
+                - Greeks exposure
+                - Risk parameters
+                - Adjustment triggers
+                - Expected scenario analysis
                 """,
                 model="gpt-4-turbo-preview",
                 tools=[{"type": "code_interpreter"}]
@@ -59,11 +100,14 @@ class StrategyGenerator:
     async def generate_strategy(self, market_data: Dict) -> Dict:
         """Generate trading strategy based on market data"""
         try:
+            # Enrich market data with technical analysis
+            enriched_data = await self._enrich_market_data(market_data)
+            
             if self.mock_mode:
-                return self._generate_mock_strategy(market_data)
+                return self._generate_mock_strategy(enriched_data)
                 
             # Format market data for the assistant
-            prompt = self._format_market_data(market_data)
+            prompt = self._format_market_data(enriched_data)
             
             # Add message to thread
             message = await self.client.beta.threads.messages.create(
@@ -186,15 +230,48 @@ class StrategyGenerator:
     def _format_market_data(self, market_data: Dict) -> str:
         """Format market data for the assistant"""
         return json.dumps({
-            "request": "Generate trading strategy",
+            "request": "Generate options trading strategy",
             "market_data": market_data,
-            "constraints": {
+            "options_analysis": market_data.get("options_analysis", {}),
+            "market_context": {
+                "current_trend": market_data.get("trend", "neutral"),
+                "recent_volatility": market_data.get("historical_volatility", 0),
+                "major_levels": market_data.get("support_resistance", []),
+                "upcoming_events": market_data.get("events", [])
+            },
+            "risk_parameters": {
                 "max_position_size": settings.RISK_LIMITS["max_position_size"],
                 "max_risk_per_trade": settings.RISK_LIMITS["stop_loss_percentage"],
-                "required_fields": [
-                    "action", "symbol", "entry_price", "stop_loss", 
-                    "take_profit", "position_size", "timeframe"
-                ]
+                "max_vega_exposure": settings.RISK_LIMITS.get("max_vega_exposure", 0.1),
+                "max_gamma_exposure": settings.RISK_LIMITS.get("max_gamma_exposure", 0.1),
+                "portfolio_margin_used": market_data.get("margin_used", 0)
+            },
+            "required_output_format": {
+                "strategy_type": "string",  # e.g., "iron_condor", "calendar_spread"
+                "rationale": "string",      # Strategy selection reasoning
+                "legs": [
+                    {
+                        "option_type": "string",  # "call" or "put"
+                        "strike": "float",
+                        "expiry": "string",
+                        "action": "string",       # "buy" or "sell"
+                        "quantity": "integer"
+                    }
+                ],
+                "entry_rules": {},          # Entry criteria
+                "exit_rules": {},           # Exit criteria
+                "greeks": {                 # Expected Greeks exposure
+                    "delta": "float",
+                    "gamma": "float",
+                    "theta": "float",
+                    "vega": "float"
+                },
+                "risk_metrics": {           # Risk parameters
+                    "max_loss": "float",
+                    "profit_potential": "float",
+                    "probability_of_profit": "float"
+                },
+                "adjustments": ["string"]   # Adjustment triggers and actions
             }
         }, indent=2)
 
@@ -215,3 +292,27 @@ class StrategyGenerator:
     async def stop(self):
         """Cleanup resources"""
         await self.redis_client.disconnect() 
+
+    async def _enrich_market_data(self, market_data: Dict) -> Dict:
+        """Enrich market data with technical analysis"""
+        try:
+            ta = TechnicalAnalysis()
+            options_analysis = await ta.analyze_options_market(market_data)
+            
+            return {
+                **market_data,
+                "options_analysis": {
+                    "iv_rank": options_analysis.iv_rank,
+                    "iv_percentile": options_analysis.iv_percentile,
+                    "historical_volatility": options_analysis.historical_volatility,
+                    "term_structure": options_analysis.term_structure,
+                    "skew": options_analysis.skew,
+                    "gamma_exposure": options_analysis.gamma_exposure,
+                    "put_call_ratio": options_analysis.put_call_ratio,
+                    "open_interest": options_analysis.open_interest,
+                    "max_pain": options_analysis.max_pain
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error enriching market data: {e}")
+            return market_data
