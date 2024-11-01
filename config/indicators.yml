@@ -1,0 +1,66 @@
+# Technical Analysis Configuration
+technical_analysis:
+  enabled: true
+  timeframes: ["1m", "5m", "15m", "1h", "4h", "1d"]
+  
+  # Options-specific Indicators
+  options_indicators:
+    enabled: true
+    indicators:
+      iv_rank:
+        enabled: true
+        lookback_period: 52  # weeks
+      iv_percentile:
+        enabled: true
+        lookback_period: 30  # days
+      term_structure:
+        enabled: true
+      volatility_skew:
+        enabled: true
+      gamma_exposure:
+        enabled: true
+      put_call_ratio:
+        enabled: true
+      open_interest:
+        enabled: true
+      max_pain:
+        enabled: true
+
+  # Chart Patterns
+  chart_patterns:
+    enabled: true
+    patterns:
+      wyckoff:
+        enabled: true
+        min_pattern_length: 30
+      orderblocks:
+        enabled: true
+        volume_threshold: 2.0  # times average volume
+      liquidation_levels:
+        enabled: true
+        threshold: 1000000  # USD value
+      volume_profile:
+        enabled: true
+        nodes: 50  # number of price levels
+
+  # Traditional Indicators (if needed as supplement)
+  traditional_indicators:
+    enabled: false
+    indicators:
+      moving_averages:
+        enabled: false
+        periods: [20, 50, 200]
+      momentum:
+        enabled: false
+        rsi: false
+        macd: false
+      volatility:
+        enabled: false
+        bollinger_bands: false
+        atr: false
+
+# Real-time Analysis Settings
+realtime:
+  update_interval: 5  # seconds
+  max_lookback: 1000  # candles
+  cache_duration: 15  # seconds 

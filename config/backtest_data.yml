@@ -1,0 +1,44 @@
+data_collection:
+  timeframe: "Last 6 months"
+  instruments:
+    - "BTC-USDT"
+    - "ETH-USDT"
+  data_types:
+    - "OHLCV"
+    - "Options chain"
+    - "IV history"
+    - "Volume profiles"
+    - "Open interest"
+    - "Funding rates"
+
+market_regimes:
+  high_volatility:
+    identification:
+      method: "rolling_std"
+      window: 30
+      threshold: 2.0
+  low_volatility:
+    identification:
+      method: "rolling_std"
+      window: 30
+      threshold: 0.5
+  trend_transitions:
+    identification:
+      method: "sma_crossover"
+      fast_period: 20
+      slow_period: 50
+  major_events:
+    identification:
+      method: "volume_spike"
+      threshold: 3.0
+
+data_quality:
+  min_data_points: 1000
+  max_missing_data: 0.01
+  required_fields:
+    - "timestamp"
+    - "open"
+    - "high"
+    - "low"
+    - "close"
+    - "volume" 

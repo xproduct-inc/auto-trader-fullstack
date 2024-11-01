@@ -21,69 +21,92 @@ wheels/
 *.egg
 
 # Virtual Environment
-.venv/
-venv/
-ENV/
-
-# Environment Files
 .env
 .env.local
-.env.*.local
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-.DS_Store
+*~
+.project
+.pydevproject
+.settings
 
 # Project specific
 logs/
+data/
+results/
+charts/
 backups/
-grafana/provisioning/
-docs/openapi.json
+*.log
+*.parquet
+*.db
+*.sqlite3
 
-# Test Coverage
-htmlcov/
-.tox/
-.nox/
+# Dependencies
+node_modules/
+poetry.lock
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Testing
 .coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
+htmlcov/
 .pytest_cache/
-cover/
-
-# MyPy
 .mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Ruff
 .ruff_cache/
 
 # Docker
+.docker/
 docker-compose.override.yml
 
-# Database
-*.sql
-*.sqlite3
-*.sqlite
+# System
+.DS_Store
+Thumbs.db
 
-# Redis
-dump.rdb
-*.rdb
+# Generated files
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.dylib
+*.dll
+*.class
 
-# Prometheus & Grafana
-prometheus_data/
-grafana_data/
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# ClickHouse
-clickhouse_data/
-
-# Poetry
-poetry.lock 
+# Temporary files
+*.swp
+*.swo
+*~
+*.bak
+*.tmp

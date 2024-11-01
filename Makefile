@@ -1,4 +1,4 @@
-.PHONY: help setup install clean lint test run migrate docker-up docker-down infra-up infra-down dev
+.PHONY: help setup install clean lint test run migrate docker-up docker-down infra-up infra-down dev setup-backtest-data validate-backtest-data test-market-observer test-strategy-generator test-risk-manager run-all-agent-tests
 
 # Variables
 PYTHON = poetry run python
@@ -144,3 +144,26 @@ dev: infra-up ## Start development environment
 	@sleep 5  # Wait for services to be ready
 	@echo "Starting API server..."
 	$(PYTHONPATH) $(PYTHON) -m uvicorn src.main:app --reload --host 0.0.0.0 --port 9000
+
+setup-backtest-data: ## Collect and prepare historical data for backtesting
+	@echo "Setting up backtesting data..."
+	$(PYTHON) -m src.backtesting.data_collector \
+		--config config/backtest_data.yml \
+		--output data/historical
+
+validate-backtest-data: ## Validate collected data quality
+	$(PYTHON) -m src.backtesting.data_validator \
+		--data data/historical \
+		--config config/backtest_data.yml
+
+test-market-observer: ## Test Market Observer agent
+	$(PYTHON) -m src.backtesting.run_agent_tests --agent market_observer
+
+test-strategy-generator: ## Test Strategy Generator agent
+	$(PYTHON) -m src.backtesting.run_agent_tests --agent strategy_generator
+
+test-risk-manager: ## Test Risk Manager agent
+	$(PYTHON) -m src.backtesting.run_agent_tests --agent risk_manager
+
+run-all-agent-tests: ## Run all agent tests
+	$(PYTHON) -m src.backtesting.run_agent_tests
